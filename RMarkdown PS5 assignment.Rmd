@@ -111,11 +111,69 @@ library(ggplot2)
 ggplot(co2_totals, aes(x = time, y = total_co2, color = name)) +
   geom_line() +
   labs(x = "Year", y = "Total CO2 Emissions", color = "Country") +
-  scale_x_continuous(breaks = seq(1950, 2020, 10)) +
-  theme_classic()
+  scale_x_continuous(breaks = seq(1950, 2020, 10))
 ```
 
 3. (5pt) Now let’s analyze the CO2 emissions per capita (co2_PC ). Make a similar plot of the
 same countries. What does this figure suggest?
 
 ```{r}
+ggplot(co2_data, aes(x = time, y = co2_PC, color = name)) +
+    geom_line() +
+    labs(title = "CO2 Emissions per Capita over Time", x = "Year", y = "CO2 Emissions per Capita")
+```
+
+4. Compute average CO2 emissions per capita across the continents (assume region is the
+same as continent). Comment what do you see.
+Note: just compute averages over countries and ignore the fact that countries are of different
+size.
+
+```{r}
+avg_co2_by_continent <- gapminder %>%
+  filter(time == 2016) %>%
+  group_by(region) %>%
+  summarize(Avg_CO2_per_Capita = mean(co2_PC, na.rm = TRUE))
+print(avg_co2_by_continent)
+```
+
+7. Make a barplot where you show the previous results–average CO2 emissions per capita
+across continents in 1960 and 2016.
+
+```{r}
+avg_co2_by_continent <- gapminder %>%
+  filter(time %in% c(1960, 2016)) %>%
+  group_by(region, time) %>%
+  summarize(Avg_CO2_per_Capita = mean(co2_PC, na.rm = TRUE)) %>%
+  filter(!is.na(region))
+
+ggplot(avg_co2_by_continent, aes(x = region, y = Avg_CO2_per_Capita, fill = as.factor(time))) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Continent", y = "Average CO2 Emissions per Capita", fill = "Year") +
+  ggtitle("Average CO2 Emissions per Capita by Continent (1960 vs. 2016)")
+```
+
+6. Which countries are the three largest, and three smallest CO2 emitters (in terms of CO2 per
+capita) in 2019 for each continent? (Assume region is continent).
+
+```{r}
+gapminder_2019 <- gapminder %>%
+  filter(time == 2019)
+
+sorted_data <- gapminder_2019 %>%
+  arrange(region, desc(co2_PC))
+
+largest_emitters <- sorted_data %>%
+  group_by(region) %>%
+  slice_head(n = 3) %>%
+  select(region, name, co2_PC)
+
+smallest_emitters <- sorted_data %>%
+  group_by(region) %>%
+  slice_tail(n = 3) %>%
+  select(region, name, co2_PC)
+
+print(largest_emitters)
+
+
+
+```
