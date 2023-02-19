@@ -1,0 +1,121 @@
+---
+title: "ps05-rmarkdown-plot"
+output: html_document
+date: "2023-02-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+```{r}
+library(tidyverse)
+gapminder <- read_delim("C:/Users/skyne/Downloads/gapminder.csv.bz2")
+```
+
+2. (2pt) Load data. How many rows/columns do we have?
+
+```{r}
+nrow(gapminder)
+ncol(gapminder)
+```
+
+3. (2pt) Print a small sample of data. Does it look OK?
+
+```{r}
+head(gapminder)
+```
+
+Yes, it looks okay. 
+
+##2 Descriptive statistics (15pt)
+
+1. (3pt) How many countries are there in the dataset? Analyze all three: iso3, iso2 and name.
+
+```{r}
+gapminder %>%
+  filter(!is.na(iso3)) %>%
+  distinct(iso3) %>%
+  nrow()
+
+gapminder %>%
+  filter(!is.na(iso2)) %>%
+  distinct(iso3) %>%
+  nrow()
+
+gapminder %>%
+  filter(!is.na(name)) %>%
+  distinct(iso3) %>%
+  nrow()
+```
+
+2. If you did this correctly, you saw that there are more names than iso-2 codes, and there are even more iso3 codes. What is going on? Can you find it out?
+  (a) (5pt) Find how many names are there for each iso-2     code. Are there any iso-2 codes that correspond to       more than one name? What are these countries?
+
+```{r}
+gapminder %>%
+  group_by(iso2) %>%
+  filter(n_distinct(name) > 1) %>%
+  select(iso2, name) %>%
+  unique() %>%
+  arrange(iso2, name)
+```
+
+(b) (5pt) Now repeat the same for name and iso3-code. Are there country names that have more than one iso3-code? What are these countries?
+
+```{r}
+gapminder %>%
+  group_by(name) %>%
+  summarize(num_codes = n_distinct(iso3))
+
+gapminder %>%
+  group_by(name) %>%
+  filter(n_distinct(iso3) > 1) %>%
+  select(name, iso3) %>%
+  unique()
+```
+
+3. (2pt) What is the minimum and maximum year in these data?
+
+```{r}
+min_year <- min(gapminder$time, na.rm = TRUE)
+cat("Minimum year:", min_year, "\n")
+
+max_year <- max(gapminder$time, na.rm = TRUE)
+cat("Maximum year:", max_year, "\n")
+```
+
+3 CO2 emissions (30pt)
+Next, let’s analyze CO2 emissions.
+1. (2pt) How many missing co2 emissions are there for each year? Analyze both missing co2
+and co2_PC. Which years have most missing data?
+
+```{r}
+gapminder %>%
+  group_by(time) %>%
+  summarize(num_missing_co2 = sum(is.na(co2)),
+            num_missing_co2_pc = sum(is.na(co2_PC))) %>%
+  arrange(desc(num_missing_co2 + num_missing_co2_pc))
+```
+
+2. (5pt) Make a plot of total CO2 emissions over time for the U.S, China, and India. Add a few
+more countries of your choice. Explain what do you see.
+
+```{r}
+co2_data <- filter(gapminder, name %in% c("United States of America", "China", "India", "Canada", "Malaysia"))
+
+co2_totals <- co2_data %>%
+  group_by(name, time) %>%
+  summarize(total_co2 = sum(co2, na.rm = TRUE))
+
+library(ggplot2)
+ggplot(co2_totals, aes(x = time, y = total_co2, color = name)) +
+  geom_line() +
+  labs(x = "Year", y = "Total CO2 Emissions", color = "Country") +
+  scale_x_continuous(breaks = seq(1950, 2020, 10)) +
+  theme_classic()
+```
+
+3. (5pt) Now let’s analyze the CO2 emissions per capita (co2_PC ). Make a similar plot of the
+same countries. What does this figure suggest?
+
+```{r}
