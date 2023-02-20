@@ -341,3 +341,5 @@ n_entries_2019 <- nrow(data_2019)
 us_rank_2019$rank_relative <- us_rank_2019$rank / n_entries_2019
 print(us_rank_2019$rank_relative)
 ```
+
+This took me 5.5 hours.
